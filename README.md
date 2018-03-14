@@ -84,7 +84,7 @@ r := render.New(render.Options{
     AssetNames: func() []string { // Return a list of asset names for the Asset function
       return []string{"filename.tmpl"}
     },
-    Layout: "layout", // Specify a layout template. Layouts can call {{ yield }} to render the current template or {{ partial "css" }} to render a partial from the current template.
+    Layout: "layout", // Specify a layout template. Layouts can call {{ yield . }} to render the current template or {{ partial . "css" }} to render a partial from the current template.
     Extensions: []string{".tmpl", ".html"}, // Specify extensions to load for templates.
     Funcs: []template.FuncMap{AppHelpers}, // Specify helper function maps for templates to access.
     Delims: render.Delims{"{[{", "}]}"}, // Sets delimiters to the specified strings.
@@ -186,20 +186,20 @@ r := render.New(render.Options{
   <head>
     <title>My Layout</title>
     <!-- Render the partial template called `css-$current_template` here -->
-    {{ partial "css" }}
+    {{ partial . "css" }}
   </head>
   <body>
     <!-- render the partial template called `header-$current_template` here -->
-    {{ partial "header" }}
+    {{ partial . "header" }}
     <!-- Render the current template here -->
-    {{ yield }}
+    {{ yield . }}
     <!-- render the partial template called `footer-$current_template` here -->
-    {{ partial "footer" }}
+    {{ partial . "footer" }}
   </body>
 </html>
 ~~~
 
-`current` can also be called to get the current template being rendered.
+The name of the current template being rendered is stored under `.Name`.
 ~~~ html
 <!-- templates/layout.tmpl -->
 <html>
@@ -207,7 +207,20 @@ r := render.New(render.Options{
     <title>My Layout</title>
   </head>
   <body>
-    This is the {{ current }} page.
+    This is the {{ .Name }} page.
+  </body>
+</html>
+~~~
+
+The name of the current layout being rendered is stored under `.Layout`.
+~~~ html
+<!-- templates/layout.tmpl -->
+<html>
+  <head>
+    <title>My Layout</title>
+  </head>
+  <body>
+    This is the {{ .Layout }} layout.
   </body>
 </html>
 ~~~
@@ -220,7 +233,7 @@ name needs to be defined as "{partial name}-{template name}".
 <h1>Home</h1>
 {{ end }}
 
-{{ define "footer-home"}}
+{{ define "footer-home" }}
 <p>The End</p>
 {{ end }}
 ~~~

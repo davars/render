@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"io"
@@ -46,7 +47,7 @@ type Delims struct {
 
 // Options is a struct for specifying configuration options for the render.Render object.
 type Options struct {
-	// Directory to load templates. Default is "templates".
+	// Directory to load templates. Default is "".
 	Directory string
 	// Asset function to use in place of directory. Defaults to nil.
 	Asset func(name string) ([]byte, error)
@@ -143,9 +144,6 @@ func (r *Render) prepareOptions() {
 		r.compiledCharset = "; charset=" + r.opt.Charset
 	}
 
-	if len(r.opt.Directory) == 0 {
-		r.opt.Directory = "templates"
-	}
 	if len(r.opt.Extensions) == 0 {
 		r.opt.Extensions = []string{".tmpl"}
 	}
@@ -253,18 +251,18 @@ func (r *Render) execute(name string, binding interface{}) (*bytes.Buffer, error
 
 func (r *Render) addLayoutFuncs() {
 	r.templates.Funcs(template.FuncMap{
-		"yield": func(h htmlData) (template.HTML, error) {
-			buf, err := r.execute(h.Name, h)
+		"yield": func(ctx TemplateContext) (template.HTML, error) {
+			buf, err := r.execute(ctx.Name, ctx)
 			// Return safe HTML here since we are rendering our own template.
 			return template.HTML(buf.String()), err
 		},
-		"partial": func(partialName string, h htmlData) (template.HTML, error) {
-			fullPartialName := fmt.Sprintf("%s-%s", partialName, h.Name)
+		"partial": func(ctx TemplateContext, partialName string) (template.HTML, error) {
+			fullPartialName := fmt.Sprintf("%s-%s", partialName, ctx.Name)
 			if r.TemplateLookup(fullPartialName) == nil && r.opt.RenderPartialsWithoutPrefix {
 				fullPartialName = partialName
 			}
 			if r.opt.RequirePartials || r.TemplateLookup(fullPartialName) != nil {
-				buf, err := r.execute(fullPartialName, h)
+				buf, err := r.execute(fullPartialName, ctx)
 				// Return safe HTML here since we are rendering our own template.
 				return template.HTML(buf.String()), err
 			}
@@ -307,7 +305,7 @@ func (r *Render) Data(w io.Writer, status int, v []byte) error {
 }
 
 // HTML builds up the response from the specified template and bindings.
-func (r *Render) HTML(w io.Writer, status int, name string, binding interface{}, htmlOpt ...HTMLOptions) error {
+func (r *Render) HTML(ctx context.Context, w io.Writer, status int, name string, binding interface{}, htmlOpt ...HTMLOptions) error {
 	// If we are in development mode, recompile the templates on every HTML request.
 	if r.opt.IsDevelopment {
 		r.templatesLk.Lock()
@@ -324,6 +322,7 @@ func (r *Render) HTML(w io.Writer, status int, name string, binding interface{},
 		Head:      head,
 		Name:      name,
 		Layout:    r.prepareHTMLOptions(htmlOpt).Layout,
+		Ctx:       ctx,
 		Templates: r.templates,
 	}
 

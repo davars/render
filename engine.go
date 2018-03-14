@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"html/template"
@@ -30,6 +31,7 @@ type HTML struct {
 	Head
 	Name      string
 	Layout    string
+	Ctx       context.Context
 	Templates *template.Template
 }
 
@@ -81,9 +83,11 @@ func (d Data) Render(w io.Writer, v interface{}) error {
 	return nil
 }
 
-type htmlData struct {
+// TemplateContext is the struct templates are executed with
+type TemplateContext struct {
 	Layout string
 	Name   string
+	Ctx    context.Context
 	Data   interface{}
 }
 
@@ -92,7 +96,7 @@ func (h HTML) Render(w io.Writer, binding interface{}) error {
 	// Retrieve a buffer from the pool to write to.
 	out := bufPool.Get()
 
-	data := htmlData{Layout: h.Layout, Name: h.Name, Data: binding}
+	data := TemplateContext{Ctx: h.Ctx, Layout: h.Layout, Name: h.Name, Data: binding}
 	var err error
 	if h.Layout == "" {
 		err = h.Templates.ExecuteTemplate(out, h.Name, data)

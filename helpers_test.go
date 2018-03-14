@@ -14,7 +14,7 @@ func TestRenderPartial(t *testing.T) {
 
 	var renErr error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		renErr = render.HTML(w, http.StatusOK, "content", "gophers")
+		renErr = render.HTML(r.Context(), w, http.StatusOK, "content", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -36,7 +36,7 @@ func TestRenderPartialRequirePartialsOff(t *testing.T) {
 	})
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		render.HTML(w, http.StatusOK, "content-partial", "gophers")
+		render.HTML(r.Context(), w, http.StatusOK, "content-partial", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -57,7 +57,7 @@ func TestRenderPartialRequirePartialsOn(t *testing.T) {
 	})
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		render.HTML(w, http.StatusOK, "content-partial", "gophers")
+		render.HTML(r.Context(), w, http.StatusOK, "content-partial", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -67,5 +67,5 @@ func TestRenderPartialRequirePartialsOn(t *testing.T) {
 	}
 	h.ServeHTTP(res, req)
 
-	expect(t, res.Body.String(), "template: layout:1:3: executing \"layout\" at <partial \"before\" .>: error calling partial: html/template: \"before-content-partial\" is undefined\n")
+	expect(t, res.Body.String(), "template: layout:1:3: executing \"layout\" at <partial . \"before\">: error calling partial: html/template: \"before-content-partial\" is undefined\n")
 }
