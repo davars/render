@@ -354,7 +354,7 @@ func TestCompileTemplatesFromDir(t *testing.T) {
 		Directory:  baseDir,
 		Extensions: []string{".tmpl", ".html"},
 	})
-	r.compileTemplatesFromDir()
+	r.compileTemplates()
 
 	expect(t, r.TemplateLookup(fname1Rel) != nil, true)
 	expect(t, r.TemplateLookup(fname0Rel) != nil, true)

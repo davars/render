@@ -175,60 +175,42 @@ func (r *Render) prepareOptions() {
 }
 
 func (r *Render) compileTemplates() {
-	if r.opt.Asset == nil || r.opt.AssetNames == nil {
-		r.compileTemplatesFromDir()
-		return
+	if r.opt.Asset == nil {
+		r.opt.Asset = ioutil.ReadFile
+	}
+	if r.opt.AssetNames == nil {
+		r.opt.AssetNames = func() []string {
+			var names []string
+			filepath.Walk(r.opt.Directory, func(path string, info os.FileInfo, err error) error {
+				// Fix same-extension-dirs bug: some dir might be named to: "users.tmpl", "local.html".
+				// These dirs should be excluded as they are not valid golang templates, but files under
+				// them should be treat as normal.
+				// If is a dir, return immediately (dir is not a valid golang template).
+				if info == nil || info.IsDir() {
+					return nil
+				}
+				names = append(names, path)
+				return nil
+			})
+			return names
+		}
 	}
 	r.compileTemplatesFromAsset()
 }
 
-func (r *Render) compileTemplatesFromDir() {
-	dir := r.opt.Directory
-	r.templates = template.New(dir)
-	r.templates.Delims(r.opt.Delims.Left, r.opt.Delims.Right)
+func (r *Render) addFuncs(tmpl *template.Template) {
+	// Add our funcmaps.
+	for _, funcs := range r.opt.Funcs {
+		tmpl.Funcs(funcs)
+	}
+}
 
-	// Walk the supplied directory and compile any files that match our extension list.
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		// Fix same-extension-dirs bug: some dir might be named to: "users.tmpl", "local.html".
-		// These dirs should be excluded as they are not valid golang templates, but files under
-		// them should be treat as normal.
-		// If is a dir, return immediately (dir is not a valid golang template).
-		if info == nil || info.IsDir() {
-			return nil
-		}
+func (r *Render) parseTemplate(name string, text string) {
+	tmpl := r.templates.New(name)
 
-		rel, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
-		}
+	r.addFuncs(tmpl)
 
-		ext := ""
-		if strings.Index(rel, ".") != -1 {
-			ext = filepath.Ext(rel)
-		}
-
-		for _, extension := range r.opt.Extensions {
-			if ext == extension {
-				buf, err := ioutil.ReadFile(path)
-				if err != nil {
-					panic(err)
-				}
-
-				name := (rel[0 : len(rel)-len(ext)])
-				tmpl := r.templates.New(filepath.ToSlash(name))
-
-				// Add our funcmaps.
-				for _, funcs := range r.opt.Funcs {
-					tmpl.Funcs(funcs)
-				}
-
-				// Break out if this parsing fails. We don't want any silent server starts.
-				template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
-				break
-			}
-		}
-		return nil
-	})
+	template.Must(tmpl.Funcs(helperFuncs).Parse(text))
 }
 
 func (r *Render) compileTemplatesFromAsset() {
@@ -248,7 +230,7 @@ func (r *Render) compileTemplatesFromAsset() {
 
 		ext := ""
 		if strings.Index(rel, ".") != -1 {
-			ext = "." + strings.Join(strings.Split(rel, ".")[1:], ".")
+			ext = filepath.Ext(rel)
 		}
 
 		for _, extension := range r.opt.Extensions {
@@ -259,16 +241,9 @@ func (r *Render) compileTemplatesFromAsset() {
 					panic(err)
 				}
 
-				name := (rel[0 : len(rel)-len(ext)])
-				tmpl := r.templates.New(filepath.ToSlash(name))
+				name := rel[0 : len(rel)-len(ext)]
 
-				// Add our funcmaps.
-				for _, funcs := range r.opt.Funcs {
-					tmpl.Funcs(funcs)
-				}
-
-				// Break out if this parsing fails. We don't want any silent server starts.
-				template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
+				r.parseTemplate(filepath.ToSlash(name), string(buf))
 				break
 			}
 		}
