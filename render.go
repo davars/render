@@ -254,7 +254,7 @@ func (r *Render) execute(name string, binding interface{}) (*bytes.Buffer, error
 func (r *Render) addLayoutFuncs() {
 	r.templates.Funcs(template.FuncMap{
 		"yield": func(h htmlData) (template.HTML, error) {
-			buf, err := r.execute(h.Name, h.Data)
+			buf, err := r.execute(h.Name, h)
 			// Return safe HTML here since we are rendering our own template.
 			return template.HTML(buf.String()), err
 		},
@@ -267,7 +267,7 @@ func (r *Render) addLayoutFuncs() {
 				fullPartialName = partialName
 			}
 			if r.opt.RequirePartials || r.TemplateLookup(fullPartialName) != nil {
-				buf, err := r.execute(fullPartialName, h.Data)
+				buf, err := r.execute(fullPartialName, h)
 				// Return safe HTML here since we are rendering our own template.
 				return template.HTML(buf.String()), err
 			}

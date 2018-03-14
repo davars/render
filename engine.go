@@ -92,11 +92,12 @@ func (h HTML) Render(w io.Writer, binding interface{}) error {
 	// Retrieve a buffer from the pool to write to.
 	out := bufPool.Get()
 
+	data := htmlData{Layout: h.Layout, Name: h.Name, Data: binding}
 	var err error
 	if h.Layout == "" {
-		err = h.Templates.ExecuteTemplate(out, h.Name, binding)
+		err = h.Templates.ExecuteTemplate(out, h.Name, data)
 	} else {
-		err = h.Templates.ExecuteTemplate(out, h.Layout, htmlData{Layout: h.Layout, Name: h.Name, Data: binding})
+		err = h.Templates.ExecuteTemplate(out, h.Layout, data)
 	}
 	if err != nil {
 		return err
