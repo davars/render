@@ -36,8 +36,6 @@ const (
 	defaultCharset = "UTF-8"
 )
 
-// helperFuncs had to be moved out. See helpers.go|helpers_pre16.go files.
-
 // Delims represents a set of Left and Right delimiters for HTML template rendering.
 type Delims struct {
 	// Left delimiter, defaults to {{.
@@ -195,25 +193,19 @@ func (r *Render) compileTemplates() {
 	r.compileTemplatesFromAsset()
 }
 
-func (r *Render) addFuncs(tmpl *template.Template) {
-	// Add our funcmaps.
-	for _, funcs := range r.opt.Funcs {
-		tmpl.Funcs(funcs)
-	}
-}
-
 func (r *Render) parseTemplate(name string, text string) {
 	tmpl := r.templates.New(name)
-
-	r.addFuncs(tmpl)
-
-	template.Must(tmpl.Funcs(helperFuncs).Parse(text))
+	template.Must(tmpl.Parse(text))
 }
 
 func (r *Render) compileTemplatesFromAsset() {
 	dir := r.opt.Directory
 	r.templates = template.New(dir)
 	r.templates.Delims(r.opt.Delims.Left, r.opt.Delims.Right)
+	r.addLayoutFuncs()
+	for _, funcs := range r.opt.Funcs {
+		r.templates.Funcs(funcs)
+	}
 
 	for _, path := range r.opt.AssetNames() {
 		if !strings.HasPrefix(path, dir) {
@@ -259,32 +251,29 @@ func (r *Render) execute(name string, binding interface{}) (*bytes.Buffer, error
 	return buf, r.templates.ExecuteTemplate(buf, name, binding)
 }
 
-func (r *Render) addLayoutFuncs(name string, binding interface{}) {
-	funcs := template.FuncMap{
-		"yield": func() (template.HTML, error) {
-			buf, err := r.execute(name, binding)
+func (r *Render) addLayoutFuncs() {
+	r.templates.Funcs(template.FuncMap{
+		"yield": func(h htmlData) (template.HTML, error) {
+			buf, err := r.execute(h.Name, h.Data)
 			// Return safe HTML here since we are rendering our own template.
 			return template.HTML(buf.String()), err
 		},
-		"current": func() (string, error) {
-			return name, nil
+		"current": func(h htmlData) (string, error) {
+			return h.Name, nil
 		},
-		"partial": func(partialName string) (template.HTML, error) {
-			fullPartialName := fmt.Sprintf("%s-%s", partialName, name)
+		"partial": func(partialName string, h htmlData) (template.HTML, error) {
+			fullPartialName := fmt.Sprintf("%s-%s", partialName, h.Name)
 			if r.TemplateLookup(fullPartialName) == nil && r.opt.RenderPartialsWithoutPrefix {
 				fullPartialName = partialName
 			}
 			if r.opt.RequirePartials || r.TemplateLookup(fullPartialName) != nil {
-				buf, err := r.execute(fullPartialName, binding)
+				buf, err := r.execute(fullPartialName, h.Data)
 				// Return safe HTML here since we are rendering our own template.
 				return template.HTML(buf.String()), err
 			}
 			return "", nil
 		},
-	}
-	if tpl := r.templates.Lookup(name); tpl != nil {
-		tpl.Funcs(funcs)
-	}
+	})
 }
 
 func (r *Render) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
@@ -322,19 +311,11 @@ func (r *Render) Data(w io.Writer, status int, v []byte) error {
 
 // HTML builds up the response from the specified template and bindings.
 func (r *Render) HTML(w io.Writer, status int, name string, binding interface{}, htmlOpt ...HTMLOptions) error {
-	r.templatesLk.Lock()
-	defer r.templatesLk.Unlock()
-
 	// If we are in development mode, recompile the templates on every HTML request.
 	if r.opt.IsDevelopment {
+		r.templatesLk.Lock()
+		defer r.templatesLk.Unlock()
 		r.compileTemplates()
-	}
-
-	opt := r.prepareHTMLOptions(htmlOpt)
-	// Assign a layout if there is one.
-	if len(opt.Layout) > 0 {
-		r.addLayoutFuncs(name, binding)
-		name = opt.Layout
 	}
 
 	head := Head{
@@ -345,6 +326,7 @@ func (r *Render) HTML(w io.Writer, status int, name string, binding interface{},
 	h := HTML{
 		Head:      head,
 		Name:      name,
+		Layout:    r.prepareHTMLOptions(htmlOpt).Layout,
 		Templates: r.templates,
 	}
 

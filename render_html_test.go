@@ -316,7 +316,7 @@ func TestHTMLLoadFromAssets(t *testing.T) {
 			case "templates/test.tmpl":
 				return []byte("<h1>gophers</h1>\n"), nil
 			case "templates/layout.tmpl":
-				return []byte("head\n{{ yield }}\nfoot\n"), nil
+				return []byte("head\n{{ yield . }}\nfoot\n"), nil
 			default:
 				return nil, errors.New("file not found: " + file)
 			}

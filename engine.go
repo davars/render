@@ -29,6 +29,7 @@ type Data struct {
 type HTML struct {
 	Head
 	Name      string
+	Layout    string
 	Templates *template.Template
 }
 
@@ -80,11 +81,23 @@ func (d Data) Render(w io.Writer, v interface{}) error {
 	return nil
 }
 
+type htmlData struct {
+	Layout string
+	Name   string
+	Data   interface{}
+}
+
 // Render a HTML response.
 func (h HTML) Render(w io.Writer, binding interface{}) error {
 	// Retrieve a buffer from the pool to write to.
 	out := bufPool.Get()
-	err := h.Templates.ExecuteTemplate(out, h.Name, binding)
+
+	var err error
+	if h.Layout == "" {
+		err = h.Templates.ExecuteTemplate(out, h.Name, binding)
+	} else {
+		err = h.Templates.ExecuteTemplate(out, h.Layout, htmlData{Layout: h.Layout, Name: h.Name, Data: binding})
+	}
 	if err != nil {
 		return err
 	}
