@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -95,8 +94,6 @@ type Options struct {
 	StreamingJSON bool
 	// Require that all partials executed in the layout are implemented in all templates using the layout. Default is false.
 	RequirePartials bool
-	// Deprecated: Use the above `RequirePartials` instead of this. As of Go 1.6, blocks are built in. Default is false.
-	RequireBlocks bool
 	// Disables automatic rendering of http.StatusInternalServerError when an error occurs. Default is false.
 	DisableHTTPErrorRendering bool
 	// Enables using partials without the current filename suffix which allows use of the same template in multiple files. e.g {{ partial "carosuel" }} inside the home template will match carosel-home or carosel.
@@ -271,19 +268,6 @@ func (r *Render) addLayoutFuncs(name string, binding interface{}) {
 		},
 		"current": func() (string, error) {
 			return name, nil
-		},
-		"block": func(partialName string) (template.HTML, error) {
-			log.Print("Render's `block` implementation is now depericated. Use `partial` as a drop in replacement.")
-			fullPartialName := fmt.Sprintf("%s-%s", partialName, name)
-			if r.TemplateLookup(fullPartialName) == nil && r.opt.RenderPartialsWithoutPrefix {
-				fullPartialName = partialName
-			}
-			if r.opt.RequireBlocks || r.TemplateLookup(fullPartialName) != nil {
-				buf, err := r.execute(fullPartialName, binding)
-				// Return safe HTML here since we are rendering our own template.
-				return template.HTML(buf.String()), err
-			}
-			return "", nil
 		},
 		"partial": func(partialName string) (template.HTML, error) {
 			fullPartialName := fmt.Sprintf("%s-%s", partialName, name)
