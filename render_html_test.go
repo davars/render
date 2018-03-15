@@ -16,7 +16,7 @@ func TestHTMLBad(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "nope", nil)
+		err = render.HTML(w, r, http.StatusOK, "nope", nil)
 	})
 
 	res := httptest.NewRecorder()
@@ -36,7 +36,7 @@ func TestHTMLBadDisableHTTPErrorRendering(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "nope", nil)
+		err = render.HTML(w, r, http.StatusOK, "nope", nil)
 	})
 
 	res := httptest.NewRecorder()
@@ -55,7 +55,7 @@ func TestHTMLBasic(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "hello", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "hello", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -76,7 +76,7 @@ func TestHTMLXHTML(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "hello", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "hello", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -97,7 +97,7 @@ func TestHTMLExtensions(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "hypertext", nil)
+		err = render.HTML(w, r, http.StatusOK, "hypertext", nil)
 	})
 
 	res := httptest.NewRecorder()
@@ -124,7 +124,7 @@ func TestHTMLFuncs(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "index", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "index", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -143,7 +143,7 @@ func TestRenderLayout(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "content", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "content", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -162,7 +162,7 @@ func TestHTMLLayoutCurrent(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "content", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "content", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -180,7 +180,7 @@ func TestHTMLNested(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "admin/index", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "admin/index", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -200,7 +200,7 @@ func TestHTMLBadPath(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "hello", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "hello", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -219,7 +219,7 @@ func TestHTMLDelimiters(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "delims", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "delims", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -239,7 +239,7 @@ func TestHTMLDefaultCharset(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "hello", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "hello", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -263,7 +263,7 @@ func TestHTMLOverrideLayout(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "content", "gophers", HTMLOptions{
+		err = render.HTML(w, r, http.StatusOK, "content", "gophers", HTMLOptions{
 			Layout: "another_layout",
 		})
 	})
@@ -285,7 +285,7 @@ func TestHTMLNoRace(t *testing.T) {
 	})
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := render.HTML(r.Context(), w, http.StatusOK, "hello", "gophers")
+		err := render.HTML(w, r, http.StatusOK, "hello", "gophers")
 		expectNil(t, err)
 	})
 
@@ -330,7 +330,7 @@ func TestHTMLLoadFromAssets(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "test", "gophers", HTMLOptions{
+		err = render.HTML(w, r, http.StatusOK, "test", "gophers", HTMLOptions{
 			Layout: "layout",
 		})
 	})
@@ -372,7 +372,7 @@ func TestHTMLDisabledCharset(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(r.Context(), w, http.StatusOK, "hello", "gophers")
+		err = render.HTML(w, r, http.StatusOK, "hello", "gophers")
 	})
 
 	res := httptest.NewRecorder()
@@ -396,8 +396,8 @@ func TestHTMLContext(t *testing.T) {
 		Directory: "fixtures/context",
 		Funcs: []template.FuncMap{
 			{
-				"foo": func(ctx context.Context) string {
-					return ctx.Value(fooKey).(string)
+				"foo": func(req *http.Request) string {
+					return req.Context().Value(fooKey).(string)
 				},
 			},
 		},
@@ -405,7 +405,7 @@ func TestHTMLContext(t *testing.T) {
 
 	var err error
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err = render.HTML(context.WithValue(r.Context(), fooKey, "fooValue"), w, http.StatusOK, "context", "gophers")
+		err = render.HTML(w, r.WithContext(context.WithValue(r.Context(), fooKey, "fooValue")), http.StatusOK, "context", "gophers")
 	})
 
 	res := httptest.NewRecorder()

@@ -2,7 +2,6 @@ package render
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"html/template"
 	"io"
@@ -305,7 +304,7 @@ func (r *Render) Data(w io.Writer, status int, v []byte) error {
 }
 
 // HTML builds up the response from the specified template and bindings.
-func (r *Render) HTML(ctx context.Context, w io.Writer, status int, name string, binding interface{}, htmlOpt ...HTMLOptions) error {
+func (r *Render) HTML(w io.Writer, req *http.Request, status int, name string, binding interface{}, htmlOpt ...HTMLOptions) error {
 	// If we are in development mode, recompile the templates on every HTML request.
 	if r.opt.IsDevelopment {
 		r.templatesLk.Lock()
@@ -322,7 +321,7 @@ func (r *Render) HTML(ctx context.Context, w io.Writer, status int, name string,
 		Head:      head,
 		Name:      name,
 		Layout:    r.prepareHTMLOptions(htmlOpt).Layout,
-		Ctx:       ctx,
+		Req:       req,
 		Templates: r.templates,
 	}
 
