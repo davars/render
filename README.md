@@ -84,7 +84,7 @@ r := render.New(render.Options{
     AssetNames: func() []string { // Return a list of asset names for the Asset function
       return []string{"filename.tmpl"}
     },
-    Layout: "layout", // Specify a layout template. Layouts can call {{ yield . }} to render the current template or {{ partial . "css" }} to render a partial from the current template.
+    Layout: "layout", // Specify a layout template. Layouts can call {{ yield . }} to render the current template or {{ partial "css" . }} to render a partial from the current template.
     Extensions: []string{".tmpl", ".html"}, // Specify extensions to load for templates.
     Funcs: []template.FuncMap{AppHelpers}, // Specify helper function maps for templates to access.
     Delims: render.Delims{"{[{", "}]}"}, // Sets delimiters to the specified strings.
@@ -186,15 +186,15 @@ r := render.New(render.Options{
   <head>
     <title>My Layout</title>
     <!-- Render the partial template called `css-$current_template` here -->
-    {{ partial . "css" }}
+    {{ partial "css" . }}
   </head>
   <body>
     <!-- render the partial template called `header-$current_template` here -->
-    {{ partial . "header" }}
+    {{ partial "header" . }}
     <!-- Render the current template here -->
     {{ yield . }}
     <!-- render the partial template called `footer-$current_template` here -->
-    {{ partial . "footer" }}
+    {{ partial "footer" . }}
   </body>
 </html>
 ~~~

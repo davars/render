@@ -67,5 +67,5 @@ func TestRenderPartialRequirePartialsOn(t *testing.T) {
 	}
 	h.ServeHTTP(res, req)
 
-	expect(t, res.Body.String(), "template: layout:1:3: executing \"layout\" at <partial . \"before\">: error calling partial: html/template: \"before-content-partial\" is undefined\n")
+	expect(t, res.Body.String(), "template: layout:1:3: executing \"layout\" at <partial \"before\" .>: error calling partial: html/template: \"before-content-partial\" is undefined\n")
 }

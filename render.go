@@ -255,7 +255,7 @@ func (r *Render) addLayoutFuncs() {
 			// Return safe HTML here since we are rendering our own template.
 			return template.HTML(buf.String()), err
 		},
-		"partial": func(ctx TemplateContext, partialName string) (template.HTML, error) {
+		"partial": func(partialName string, ctx TemplateContext) (template.HTML, error) {
 			fullPartialName := fmt.Sprintf("%s-%s", partialName, ctx.Name)
 			if r.TemplateLookup(fullPartialName) == nil && r.opt.RenderPartialsWithoutPrefix {
 				fullPartialName = partialName
